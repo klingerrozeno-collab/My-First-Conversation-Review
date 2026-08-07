@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>English Mission: Talk Like a Pro</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f5f7ff;font-family:Arial,sans-serif}
+.wrap{max-width:1050px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.logo{font-size:23px;font-weight:900}.stats{display:flex;gap:8px;flex-wrap:wrap}.pill{background:#18223d;border:1px solid #30405f;border-radius:20px;padding:8px 13px;font-weight:800}
+.bar{height:9px;background:#192440;border-radius:9px;margin:18px 0;overflow:hidden}.fill{height:100%;width:0;background:#61e7b1;transition:.3s}
+.card{background:#121a30;border:1px solid #2b3857;border-radius:24px;padding:28px;box-shadow:0 15px 40px #0005}
+.hidden{display:none}.center{text-align:center}.emoji{font-size:68px}h1{font-size:46px;margin:10px 0}h2{font-size:31px;margin:8px 0 15px}p{font-size:18px;line-height:1.5}
+.tag{display:inline-block;padding:6px 10px;background:#203052;color:#a8dcff;border-radius:8px;font-size:13px;font-weight:900}
+.scene{background:#0c1529;border-left:5px solid #61e7b1;border-radius:12px;padding:16px;margin:18px 0;font-size:19px;line-height:1.5}
+.q{font-size:25px;font-weight:900;margin:22px 0}.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{font:inherit}.choice{background:#19233d;color:white;border:2px solid #2c3b5d;border-radius:15px;padding:15px;text-align:left;min-height:65px;cursor:pointer;transition:.15s}.choice:hover{border-color:#61e7b1;transform:translateY(-2px)}
+.choice.good{background:#173e34;border-color:#61e7b1}.choice.bad{background:#431e2d;border-color:#fb7185}
+.feedback{min-height:58px;padding-top:15px;font-weight:800;font-size:17px}.next,.start{border:0;background:#61e7b1;color:#07141a;padding:13px 21px;border-radius:13px;font-weight:900;cursor:pointer}.next:disabled{opacity:.35;cursor:not-allowed}
+.inputbox{display:flex;gap:10px;flex-wrap:wrap}.inputbox input{flex:1;min-width:250px;background:#0b1325;color:white;border:2px solid #334362;border-radius:12px;padding:15px;font-size:19px}.submit{background:#61e7b1;border:0;border-radius:12px;padding:14px 18px;font-weight:900;cursor:pointer}
+.tokens{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}.token{background:#243150;padding:11px 14px;border-radius:12px;cursor:pointer;border:2px solid transparent;font-weight:800}.token.selected{border-color:#61e7b1}
+.bigscore{font-size:70px;font-weight:900;color:#61e7b1}.rank{font-size:25px;font-weight:900;margin:10px}
+.small{font-size:14px;color:#aab6d0}
+@media(max-width:700px){.choices{grid-template-columns:1fr}h1{font-size:36px}.card{padding:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><div class="logo">🧠 English Mission</div><div class="stats"><div class="pill">⭐ <span id="score">0</span></div><div class="pill">🔥 <span id="streak">0</span></div><div class="pill">🎯 <span id="num">1</span>/20</div></div></div>
+<div class="bar"><div class="fill" id="fill"></div></div>
+
+<section id="start" class="card center">
+<div class="emoji">🕵️‍♂️</div>
+<h1>English Mission</h1>
+<p><b>Your mission:</b> survive 20 situations in English.</p>
+<p>There are no simple “A, B, C” questions all the way through. You will have to <b>notice, think, repair, choose, build and respond.</b></p>
+<p class="small">Based only on the three blocks studied: greetings → asking → answering.</p>
+<button class="start" onclick="start()">START MISSION 🚀</button>
+</section>
+
+<section id="game" class="card hidden">
+<div class="tag" id="tag"></div><h2 id="title"></h2><div class="scene" id="scene"></div><div class="q" id="question"></div>
+<div id="area"></div><div class="feedback" id="feedback"></div>
+<button class="next" id="next" onclick="next()" disabled>Continue →</button>
+</section>
+
+<section id="end" class="card center hidden">
+<div class="emoji">🏆</div><h1>Mission Complete!</h1><div class="bigscore" id="final"></div><div class="rank" id="rank"></div>
+<p id="endtext"></p><button class="start" onclick="location.reload()">PLAY AGAIN 🔄</button>
+</section>
+</div>
+
+<script>
+const qs=[
+{type:"choice",tag:"01 • TIME DETECTIVE",title:"The clock matters",scene:"🕗 You arrive at school at 8:00 a.m. Your teacher is at the door.",q:"Which opening sounds appropriate?",a:["Hey, good morning!","Hey, good evening!","Hey, good afternoon!","Hey, good night!"],x:0,e:"8:00 a.m. is morning."},
+{type:"choice",tag:"02 • NATURAL ENGLISH",title:"One sentence is wrong",scene:"🤖 A robot wrote four greetings. One is not a natural match for the time.",q:"It is 3:00 p.m. Which one should you delete?",a:["Hello, good afternoon.","Hi, good afternoon.","Hey, good afternoon.","Hello, good morning."],x:3,e:"3:00 p.m. is afternoon, not morning."},
+{type:"choice",tag:"03 • GRAMMAR DETECTIVE",title:"Who gets IS?",scene:"🔎 Compare: YOU / EVERYTHING",q:"Complete: “How ___ everything going?”",a:["am","are","is","be"],x:2,e:"Everything takes is."},
+{type:"choice",tag:"04 • GRAMMAR DETECTIVE",title:"Who gets ARE?",scene:"🔎 Now compare: YOU / EVERYTHING",q:"Complete: “How ___ you doing?”",a:["am","are","is","be"],x:1,e:"You takes are."},
+{type:"choice",tag:"05 • MEANING",title:"Same question, different shape",scene:"💬 You want to ask a friend how they are. You remember two structures.",q:"Which pair contains TWO expressions from the lesson?",a:["How are you doing? + How is everything going?","How is you doing? + How are everything going?","How you are? + How everything is?","How are you? + How everything are?"],x:0,e:"Both are target expressions."},
+{type:"choice",tag:"06 • CONTEXT",title:"What would you actually say?",scene:"⚽ You see your friend before a football match. It is 5 p.m.",q:"Choose the most complete opening.",a:["Hey, good afternoon! How are you today?","Hey, good morning! How is you?","Good evening! I are fine.","Hi, good night!"],x:0,e:"5 p.m. → afternoon in this lesson; then use How are you today?"},
+{type:"choice",tag:"07 • EMOTION",title:"Read the situation",scene:"😴 You had a long day. You are not feeling very well.",q:"Your friend asks “How are you today?” What fits best?",a:["I am great.","I am not so good.","I am okay.","I am fine."],x:1,e:"Not so good matches the situation."},
+{type:"choice",tag:"08 • CONVERSATION LOGIC",title:"Don't stop the conversation",scene:"🗣️ Your friend says: “I am good, thank you.” You want to return the question.",q:"What is the best next line?",a:["What about you?","How is you?","Thank you about you.","I am you?"],x:0,e:"What about you? returns the question."},
+{type:"choice",tag:"09 • MEANING",title:"Choose the best reply",scene:"🌟 Your friend says: “How is everything going?” Everything is going well.",q:"What is the most natural answer from the lesson?",a:["I am great, thank you. What about you?","How are everything?","I are great.","Good morning, everything!"],x:0,e:"Great + thank you + What about you?"},
+{type:"choice",tag:"10 • ERROR HUNT",title:"Catch the grammar bug",scene:"🐞 A message says: “How is you today?”",q:"What is the smallest useful correction?",a:["Change is → are","Change you → everything","Change today → doing","Change How → What"],x:0,e:"You → are."},
+{type:"choice",tag:"11 • ERROR HUNT",title:"Another bug",scene:"🐞 A message says: “How are everything going?”",q:"What is the smallest useful correction?",a:["Change are → is","Change everything → you","Change going → today","Change How → What"],x:0,e:"Everything → is."},
+{type:"order",tag:"12 • BUILD THE TALK",title:"Conversation architect",scene:"🧩 Build a conversation. Click the lines in the order they should happen.",q:"Start with the opening line.",a:["Hello, good morning!","How are you today?","I am fine, thank you. What about you?","I am great, thank you."],order:[0,1,2,3],e:"Greeting → question → answer + return question → answer."},
+{type:"order",tag:"13 • BUILD THE TALK",title:"Different situation",scene:"🌌 You meet a friend before a Star Wars movie in the evening.",q:"Build the conversation from greeting to response.",a:["Hey, good evening!","How are you doing?","I am great, thank you. What about you?","I am fine, thank you."],order:[0,1,2,3],e:"Keep the conversation logical."},
+{type:"input",tag:"14 • COMPLETE IT",title:"No multiple choice",scene:"🏫 Your teacher says: “Hello, good morning! How are you today?”",q:"Type a possible answer. Start with “I am...”",answers:["i am fine, thank you. what about you","i am good, thank you. what about you","i am great, thank you. what about you","i am okay, thank you. what about you"],e:"A complete answer uses I am + feeling + thank you + What about you?"},
+{type:"input",tag:"15 • COMPLETE IT",title:"Keep it simple",scene:"⚽ Your friend asks: “How are you doing?” You feel okay.",q:"Type a short answer using “I am...”.",answers:["i am okay","i am okay thank you","i am okay, thank you","i am fine","i am good"],e:"I am okay is a correct target structure."},
+{type:"choice",tag:"16 • POP CULTURE",title:"USS Enterprise protocol 🖖",scene:"🚀 You are on the USS Enterprise. It is morning. A crew member says: “Hello!”",q:"Which reply creates a complete mini-conversation?",a:["Hello, good morning! How are you today?","Good evening! I are fine.","Hi, good night! How is you?","Hello, afternoon! I am you."],x:0,e:"Correct greeting + correct question."},
+{type:"choice",tag:"17 • MARVEL",title:"Hero response 🦸",scene:"🦸 A Marvel hero asks: “How are you today?” You are feeling excellent.",q:"Which answer is strongest?",a:["I am great, thank you. What about you?","I am not so good.","How is everything?","I are great."],x:0,e:"Great fits the situation and the conversation continues."},
+{type:"choice",tag:"18 • FOOTBALL",title:"Match-day conversation ⚽",scene:"🏟️ It is 2 p.m. You meet another fan. They ask: “How is everything going?”",q:"Which answer is both grammatically correct and appropriate?",a:["I am good, thank you. What about you?","I are good, thank you.","How are everything going?","I am you, thank you."],x:0,e:"I am good + thank you + What about you?"},
+{type:"choice",tag:"19 • STRATEGY",title:"Which question would YOU choose?",scene:"🎯 You already said “Hi, good morning!” You want a simple, direct question.",q:"Which option is best?",a:["How are you today?","How is everything today?","How are you doing?","All three are possible."],x:3,e:"All three are valid expressions from the lesson."},
+{type:"choice",tag:"20 • FINAL BOSS",title:"One complete conversation",scene:"👑 Final mission: You meet a friend at 6 p.m. before a football game. They say: “Hey!”",q:"Which response shows the best control of the three blocks?",a:["Hey, good evening! How are you doing? I am great, thank you. What about you?","Good morning! How is you? I are great.","Hey, good afternoon! I fine.","Hello, good night! How are everything?"],x:0,e:"Greeting + correct question + I am + thank you + What about you? = full control."}
+];
+let i=0,score=0,streak=0,answered=false,orderPos=0;
+
+function start(){document.getElementById("start").classList.add("hidden");document.getElementById("game").classList.remove("hidden");show()}
+function show(){
+ answered=false;orderPos=0;let q=qs[i];
+ document.getElementById("tag").textContent=q.tag;document.getElementById("title").textContent=q.title;
+ document.getElementById("scene").textContent=q.scene;document.getElementById("question").textContent=q.q;
+ document.getElementById("feedback").textContent="";document.getElementById("next").disabled=true;
+ document.getElementById("num").textContent=i+1;document.getElementById("fill").style.width=((i)/qs.length*100)+"%";
+ let area=document.getElementById("area");area.innerHTML="";
+ if(q.type==="choice") renderChoice(q,area);
+ if(q.type==="input") renderInput(q,area);
+ if(q.type==="order") renderOrder(q,area);
+}
+function renderChoice(q,area){
+ let d=document.createElement("div");d.className="choices";
+ q.a.forEach((v,n)=>{let b=document.createElement("button");b.className="choice";b.textContent=String.fromCharCode(65+n)+") "+v;b.onclick=()=>choose(n,b);d.appendChild(b)});
+ area.appendChild(d)
+}
+function choose(n,b){
+ if(answered)return;answered=true;let q=qs[i];
+ document.querySelectorAll(".choice").forEach((x,k)=>{x.disabled=true;if(k===q.x)x.classList.add("good")});
+ if(n===q.x){b.classList.add("good");streak++;let pts=100+streak*20;score+=pts;feedback("✅ Correct! +"+pts+" points. "+q.e)}
+ else{b.classList.add("bad");streak=0;feedback("❌ Not quite. "+q.e)}
+}
+function renderInput(q,area){
+ let d=document.createElement("div");d.className="inputbox";
+ let inp=document.createElement("input");inp.id="answer";inp.placeholder="Type your answer here...";
+ let b=document.createElement("button");b.className="submit";b.textContent="CHECK";b.onclick=()=>checkInput(inp.value,q);
+ d.append(inp,b);area.appendChild(d);inp.focus()
+}
+function checkInput(v,q){
+ if(answered)return;let s=v.toLowerCase().replace(/[.,!?]/g,"").replace(/\s+/g," ").trim();
+ let ok=q.answers.includes(s);
+ answered=true;
+ if(ok){streak++;score+=150+streak*20;feedback("✅ Excellent! +"+(150+streak*20)+" points. "+q.e)}
+ else{streak=0;feedback("❌ Try again on the next round. A good answer would follow this pattern: "+q.e)}
+ document.getElementById("answer").disabled=true;document.querySelector(".submit").disabled=true
+}
+function renderOrder(q,area){
+ let d=document.createElement("div");d.className="choices";
+ q.a.forEach((v,n)=>{let b=document.createElement("button");b.className="choice";b.id="o"+n;b.textContent=v;b.onclick=()=>pickOrder(n,b);d.appendChild(b)});
+ area.appendChild(d)
+}
+function pickOrder(n,b){
+ let q=qs[i];if(answered)return;
+ if(n===q.order[orderPos]){
+   b.classList.add("good");b.disabled=true;orderPos++;
+   if(orderPos===q.order.length){answered=true;score+=300+streak*20;streak++;feedback("✅ Perfect conversation order! +"+(300+streak*20)+" points. "+q.e)}
+   else feedback("✔️ Good. Now choose what comes next.")
+ }else{b.classList.add("bad");streak=0;feedback("❌ Not yet. Think about the logic of a real conversation: greeting → question → answer → return/continue.")}
+}
+function feedback(t){document.getElementById("feedback").textContent=t;document.getElementById("next").disabled=!answered;document.getElementById("score").textContent=score;document.getElementById("streak").textContent=streak}
+function next(){i++;if(i>=qs.length)end();else show()}
+function end(){
+ document.getElementById("game").classList.add("hidden");document.getElementById("end").classList.remove("hidden");document.getElementById("fill").style.width="100%";
+ document.getElementById("final").textContent=score;
+ let r,t;if(score>=4200){r="🏆 Conversation Master";t="Excellent. You were not just recognizing phrases — you were making decisions about meaning, grammar and conversation flow."}
+ else if(score>=3200){r="🥇 Strong Communicator";t="Very good. You have a solid grasp of the conversation patterns. Review the grammar traps and try again for an even higher score."}
+ else if(score>=2200){r="🥈 Rising Communicator";t="Good progress. Another round will help turn these patterns into automatic responses."}
+ else{r="🥉 Training Mode";t="Keep practicing. The goal is not memorizing answers — it is recognizing the pattern and using it naturally."}
+ document.getElementById("rank").textContent=r;document.getElementById("endtext").textContent=t
+}
+</script>
+</body>
+</html>
